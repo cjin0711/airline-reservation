@@ -1,5 +1,6 @@
 #Import Flask Library
 from flask import Flask, render_template, request, session, url_for, redirect
+from datetime import datetime
 import pymysql.cursors
 
 #Initialize the app from Flask
@@ -167,10 +168,95 @@ def registerAuthStaff():
 		return render_template('index.html')
 
 
+@app.route('/flights', methods=['GET', 'POST'])
+def flights():
+	selected = request.form.get('flight_type')
+	source = request.form['source']
+	destination = request.form['destination']
+	depart_date = request.form['departure_date']
+	return_date = request.form.get('return_date')
+
+	#convert from string to date type
+	depart_dated = datetime.strptime(depart_date, '%Y-%m-%d').date()
+	return_dated = datetime.strptime(return_date, '%Y-%m-%d').date()
+
+	cursor = conn.cursor()
+
+	"""
+	#remove arrival_time, depart_airport, arrival_airport later
+	leaving = '''SELECT flight_status, airline_name, flight_number, depart_date, arrival_date, arrival_time, depart_airport, arrival_airport
+				 FROM flight 
+				 WHERE (depart_date > CURDATE() OR (depart_date = CURDATE() AND depart_time > CURTIME())) AND 
+				 depart_airport = %s AND arrival_airport = %s'''
+	"""
+	leaving = '''SELECT flight_status, airline_name, flight_number, depart_date, arrival_date, arrival_time, depart_airport, arrival_airport
+				 FROM flight 
+				 WHERE depart_date = %s AND (depart_date > CURDATE() OR (depart_date = CURDATE() AND depart_time > CURTIME())) AND 
+				 depart_airport = %s AND arrival_airport = %s'''
+
+	cursor.execute(leaving, (depart_dated, source, destination))
+		
+	#look for all future flights with specified time and airports
+	leaving_data = cursor.fetchall()
+
+	#one way trip chosen
+	if selected == 'one-way':
+
+		cursor.close()
+
+		#if there are returned results
+		if leaving_data:
+			#print("Number of Flights: " + str(len(flight_data)))
+			#for i in flight_data:
+			#	print(i)
+			return render_template('flights.html', flights = leaving_data, trip = "one-way")
+		
+		#if there are no results
+		else:
+			none_found = "No Available Flights Found."
+			return render_template('flights.html', nothing = none_found)
+	
+	#round trip chosen
+	else:
+		#return flight is after departure flight (same day return flight is tackled below)
+		returning = '''SELECT flight_status, airline_name, flight_number, depart_date, arrival_date, arrival_time, depart_airport, arrival_airport
+					   FROM flight 
+					   WHERE depart_date = %s AND depart_airport = %s AND arrival_airport = %s'''
+
+		#source and destination flipped for return flight
+		cursor.execute(returning, (return_dated, destination, source))
+
+		returning_data = cursor.fetchall()
+
+		round_trips = []
+		
+		#compare each going flight with each return flight to check if compatible
+		for i in leaving_data:
+			for j in returning_data:
+				#edge case: if same day round trip, but departure time of return flight is earlier than arrival time of going flight
+				if (i['arrival_date'] == j['depart_date']) and (i['arrival_time'] <= j['depart_time']):
+					pass
+				#if return flight occurs after arrival of going flight
+				elif i['arrival_date'] < j['depart_date']:
+					round_trips.append((i, j))
+
+		if not round_trips:
+			none_found = "No Available Flights Found."
+			return render_template('flights.html', nothing = none_found)
+		
+		return render_template('flights.html', flights = round_trips, trip = "round-trip")
+
+	
+	
+	
+	  
+	  					
 @app.route('/logout')
 def logout():
 	session.pop('email')
 	return redirect('/')
+
+
 
 		
 app.secret_key = 'some key that you will never guess'

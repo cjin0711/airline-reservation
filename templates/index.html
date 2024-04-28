@@ -17,34 +17,36 @@
     <!-- Flight Search Table -->
     <div class="flight-search-container">
         <h2>Flight Search</h2>
-        <table>
-            <tr>
-                <th>Flight Type</th>
-                <td>
-                    <input type="radio" name="flight_type" value="one-way" checked> One-way
-                    <input type="radio" name="flight_type" value="round-trip"> Round-trip
-                </td>
-            </tr>
-            <tr>
-                <th>Origin Airport</th>
-                <td><input type="text" name="source" required></td>
-            </tr>
-            <tr>
-                <th>Destination Airport</th>
-                <td><input type="text" name="destination" required></td>
-            </tr>
-            <tr>
-                <th>Departure Date</th>
-                <td><input type="date" name="departure_date" required></td>
-            </tr>
-            <tr>
-                <th>Return Date (Round Trip Only)</th>
-                <td><input type="date" name="return_date"></td>
-            </tr>
-            <tr>
-                <td colspan="2" style="text-align: right;"><input type="submit" value="Search Flights"></td>
-            </tr>
-        </table>
+        <form action="/flights" method='POST'>
+            <table>
+                <tr>
+                    <th>Flight Type</th>
+                    <td>
+                        <input type="radio" name="flight_type" value="one-way" checked> One-way
+                        <input type="radio" name="flight_type" value="round-trip"> Round-trip
+                    </td>
+                </tr>
+                <tr>
+                    <th>Origin Airport</th>
+                    <td><input type="text" name="source" required></td>
+                </tr>
+                <tr>
+                    <th>Destination Airport</th>
+                    <td><input type="text" name="destination" required></td>
+                </tr>
+                <tr>
+                    <th>Departure Date</th>
+                    <td><input type="date" name="departure_date" required></td>
+                </tr>
+                <tr>
+                    <th>Return Date (Round Trip Only)</th>
+                    <td><input type="date" name="return_date"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: right;"><input type="submit" value="Search Flights"></td>
+                </tr>
+            </table>
+        </form>
     </div>
 </body>
 </html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Available Flights</title>
+</head>
+<body>
+    <h1>Available Flights</h1>
+    {% if not nothing %}
+        {% if trip == "one-way" %}
+            {% for flight in flights %}
+                <table border='1'>
+                    <tr>
+                        <th>Status</th>
+                        <th>Airline Name</th>
+                        <th>Flight Number</th>
+                        <th>Departure Date</th>
+                        <th>Arrival Date</th>
+                        <th>Arrival Time</th>
+                        <th>Depart Airport</th>
+                        <th>Arrival Airport</th>
+                    </tr>
+                    <tr>
+                        <td>{{ flight['flight_status'] }}</td>
+                        <td>{{ flight['airline_name'] }}</td>
+                        <td>{{ flight['flight_number'] }}</td>
+                        <td>{{ flight['depart_date'] }}</td>
+                        <td>{{ flight['arrival_date'] }}</td>
+                        <!--remove td below-->
+                        <td>{{ flight['arrival_time'] }}</td>
+                        <td>{{ flight['depart_airport'] }}</td>
+                        <td>{{ flight['arrival_airport'] }}</td>
+                        
+                    </tr>
+                </table>
+                <br>
+            {% endfor %}
+        {% else %}
+        
+            {% for flight in flights %}
+                <table border='1'>
+                    <tr>
+                        <th>Status</th>
+                        <th>Airline Name</th>
+                        <th>Flight Number</th>
+                        <th>Departure Date</th>
+                        <th>Arrival Date</th>
+                        <th>Arrival Time</th>
+                        <th>Depart Airport</th>
+                        <th>Arrival Airport</th>
+                    </tr>
+                    <tr>
+                        <td>{{ flight[0]['flight_status'] }}</td>
+                        <td>{{ flight[0]['airline_name'] }}</td>
+                        <td>{{ flight[0]['flight_number'] }}</td>
+                        <td>{{ flight[0]['depart_date'] }}</td>
+                        <td>{{ flight[0]['arrival_date'] }}</td>
+                        <td>{{ flight[0]['arrival_time'] }}</td>
+                        <td>{{ flight[0]['depart_airport'] }}</td>
+                        <td>{{ flight[0]['arrival_airport'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>{{ flight[1]['flight_status'] }}</td>
+                        <td>{{ flight[1]['airline_name'] }}</td>
+                        <td>{{ flight[1]['flight_number'] }}</td>
+                        <td>{{ flight[1]['depart_date'] }}</td>
+                        <td>{{ flight[1]['arrival_date'] }}</td>
+                        <td>{{ flight[1]['arrival_time'] }}</td>
+                        <td>{{ flight[1]['depart_airport'] }}</td>
+                        <td>{{ flight[1]['arrival_airport'] }}</td>
+                    </tr>
+                </table>
+                <br>
+            {% endfor %}
+        {% endif %}
+    {% else %}
+        <h2>{{ nothing }}</h2>
+    {% endif %}
+    
+</body>
+</html>
