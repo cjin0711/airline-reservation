@@ -63,7 +63,7 @@ def loginAuth():
 		#creates a session for the the user
 		#session is a built in
 		session['email'] = email
-		return redirect(url_for('home'))
+		return render_template('customer_home.html')
 		#return render_template('customer)
 	else:
 		#returns an error message to the html page
@@ -178,17 +178,9 @@ def flights():
 
 	#convert from string to date type
 	depart_dated = datetime.strptime(depart_date, '%Y-%m-%d').date()
-	return_dated = datetime.strptime(return_date, '%Y-%m-%d').date()
 
 	cursor = conn.cursor()
 
-	"""
-	#remove arrival_time, depart_airport, arrival_airport later
-	leaving = '''SELECT flight_status, airline_name, flight_number, depart_date, arrival_date, arrival_time, depart_airport, arrival_airport
-				 FROM flight 
-				 WHERE (depart_date > CURDATE() OR (depart_date = CURDATE() AND depart_time > CURTIME())) AND 
-				 depart_airport = %s AND arrival_airport = %s'''
-	"""
 	leaving = '''SELECT flight_status, airline_name, flight_number, depart_date, arrival_date, arrival_time, depart_airport, arrival_airport
 				 FROM flight 
 				 WHERE depart_date = %s AND (depart_date > CURDATE() OR (depart_date = CURDATE() AND depart_time > CURTIME())) AND 
@@ -206,9 +198,6 @@ def flights():
 
 		#if there are returned results
 		if leaving_data:
-			#print("Number of Flights: " + str(len(flight_data)))
-			#for i in flight_data:
-			#	print(i)
 			return render_template('flights.html', flights = leaving_data, trip = "one-way")
 		
 		#if there are no results
@@ -218,6 +207,8 @@ def flights():
 	
 	#round trip chosen
 	else:
+		return_dated = datetime.strptime(return_date, '%Y-%m-%d').date()
+
 		#return flight is after departure flight (same day return flight is tackled below)
 		returning = '''SELECT flight_status, airline_name, flight_number, depart_date, arrival_date, arrival_time, depart_airport, arrival_airport
 					   FROM flight 
@@ -228,29 +219,47 @@ def flights():
 
 		returning_data = cursor.fetchall()
 
+		cursor.close()
+
 		round_trips = []
 		
 		#compare each going flight with each return flight to check if compatible
 		for i in leaving_data:
 			for j in returning_data:
 				#edge case: if same day round trip, but departure time of return flight is earlier than arrival time of going flight
-				if (i['arrival_date'] == j['depart_date']) and (i['arrival_time'] <= j['depart_time']):
+				if (i['arrival_date'] == j['depart_date']) and (i['arrival_time'] >= j['depart_time']):
 					pass
+				#if same day round trip, but departure time of return flight is after arrival time of going flight
+				elif (i['arrival_date'] == j['depart_date']) and (i['arrival_time'] < j['depart_time']):
+					round_trips.append((i, j))
 				#if return flight occurs after arrival of going flight
 				elif i['arrival_date'] < j['depart_date']:
 					round_trips.append((i, j))
-
+				
+		#since leaving_data only contains dates > CURDATE(), there will never be an instance where i[arrival_date] < j[departdate] if we choose departdate to be < CURDATE()
 		if not round_trips:
-			none_found = "No Available Flights Found."
+			none_found = "No Available Flights Found!"
 			return render_template('flights.html', nothing = none_found)
 		
 		return render_template('flights.html', flights = round_trips, trip = "round-trip")
 
+
+@app.route('/purchase', methods=['GET', 'POST'])
+def purchase():
+
+	airline_name = request.args.get('airline_name')
+	flight_number = request.args.get('flight_number')
 	
+	print(airline_name)
+	print(flight_number)
+	if request.method == 'GET':
+		print("OH YEAH")
+		return render_template('purchase.html')
+
+
+
 	
-	
-	  
-	  					
+					
 @app.route('/logout')
 def logout():
 	session.pop('email')

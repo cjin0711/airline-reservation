@@ -15,6 +15,7 @@
         <a href="/staff_register">Staff Register</a>
     </div>
     <!-- Flight Search Table -->
+
     <div class="flight-search-container">
         <h2>Flight Search</h2>
         <form action="/flights" method='POST'>
@@ -22,8 +23,8 @@
                 <tr>
                     <th>Flight Type</th>
                     <td>
-                        <input type="radio" name="flight_type" value="one-way" checked> One-way
-                        <input type="radio" name="flight_type" value="round-trip"> Round-trip
+                    <input type="radio" name="flight_type" value="one-way" onchange='toggleReturn()' checked> One-way
+                    <input type="radio" name="flight_type" value="round-trip" onchange='toggleReturn()'> Round-trip
                     </td>
                 </tr>
                 <tr>
@@ -40,7 +41,7 @@
                 </tr>
                 <tr>
                     <th>Return Date (Round Trip Only)</th>
-                    <td><input type="date" name="return_date"></td>
+                    <td><input type="date" id="return_field" name="return_date" disabled></td>
                 </tr>
                 <tr>
                     <td colspan="2" style="text-align: right;"><input type="submit" value="Search Flights"></td>
@@ -48,5 +49,21 @@
             </table>
         </form>
     </div>
+        
+    <!-- Disabled Return Date Field if One Way Trip -->
+    <script>
+        function toggleReturn() {
+            const choice = document.querySelector('input[name="flight_type"]:checked');
+            const return_field = document.getElementById('return_field');
+
+            if (choice.value == "round-trip") {
+                return_field.disabled = false;
+            } 
+            else {
+                return_field.disabled = true;
+            }
+        }
+    </script>
+
 </body>
 </html>

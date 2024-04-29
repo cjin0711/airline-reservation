@@ -2,23 +2,27 @@
 <html>
 <head>
     <title>Available Flights</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <h1>Available Flights</h1>
     {% if not nothing %}
-        {% if trip == "one-way" %}
-            {% for flight in flights %}
-                <table border='1'>
-                    <tr>
-                        <th>Status</th>
-                        <th>Airline Name</th>
-                        <th>Flight Number</th>
-                        <th>Departure Date</th>
-                        <th>Arrival Date</th>
-                        <th>Arrival Time</th>
-                        <th>Depart Airport</th>
-                        <th>Arrival Airport</th>
-                    </tr>
+        {% for flight in flights %}
+            <table border='2'>
+                <tr>
+                    <th>Status</th>
+                    <th>Airline Name</th>
+                    <th>Flight Number</th>
+                    <th>Departure Date</th>
+                    <th>Arrival Date</th>
+                    <th>Arrival Time</th>
+                    <th>Depart Airport</th>
+                    <th>Arrival Airport</th>
+                    {% if session.email %}
+                        <th>Purchase</th>
+                    {% endif %}
+                </tr>
+                {% if trip == "one-way" %}
                     <tr>
                         <td>{{ flight['flight_status'] }}</td>
                         <td>{{ flight['airline_name'] }}</td>
@@ -29,25 +33,18 @@
                         <td>{{ flight['arrival_time'] }}</td>
                         <td>{{ flight['depart_airport'] }}</td>
                         <td>{{ flight['arrival_airport'] }}</td>
-                        
+                        {% if session.email %}
+                            <td>
+                                <form action = "/purchase" method='GET'>
+                                    <!--shortcut way to make sure specified gets passed through with button click-->
+                                    <input type="hidden" name = "airline_name" value="{{ flight['airline_name'] }}">
+                                    <input type="hidden" name = "flight_number" value="{{ flight['flight_number'] }}">
+                                    <input type="submit" class="purchase" value = Purchase></input>
+                                </form>
+                            </td>
+                        {% endif %}
                     </tr>
-                </table>
-                <br>
-            {% endfor %}
-        {% else %}
-        
-            {% for flight in flights %}
-                <table border='1'>
-                    <tr>
-                        <th>Status</th>
-                        <th>Airline Name</th>
-                        <th>Flight Number</th>
-                        <th>Departure Date</th>
-                        <th>Arrival Date</th>
-                        <th>Arrival Time</th>
-                        <th>Depart Airport</th>
-                        <th>Arrival Airport</th>
-                    </tr>
+                {% else %}
                     <tr>
                         <td>{{ flight[0]['flight_status'] }}</td>
                         <td>{{ flight[0]['airline_name'] }}</td>
@@ -57,6 +54,19 @@
                         <td>{{ flight[0]['arrival_time'] }}</td>
                         <td>{{ flight[0]['depart_airport'] }}</td>
                         <td>{{ flight[0]['arrival_airport'] }}</td>
+                        {% if session['email'] %}
+                        <td rowspan="2">
+                            <form action = "/purchase" method='GET'>
+                                <!--shortcut way to make sure specified gets passed through with button click-->
+                                <input type="hidden" name = "flight_type" value="round-trip">
+                                <input type="hidden" name = "depart_airline_name" value="{{ flight[0]['airline_name'] }}">
+                                <input type="hidden" name = "depart_flight_number" value="{{ flight[0]['flight_number'] }}">
+                                <input type="hidden" name = "return_airline_name" value="{{ flight[1]['airline_name'] }}">
+                                <input type="hidden" name = "return_flight_number" value="{{ flight[1]['flight_number'] }}">
+                                <input type="submit" class="purchase" value = Purchase></input>
+                            </form>
+                        </td>
+                        {% endif %}
                     </tr>
                     <tr>
                         <td>{{ flight[1]['flight_status'] }}</td>
@@ -68,10 +78,10 @@
                         <td>{{ flight[1]['depart_airport'] }}</td>
                         <td>{{ flight[1]['arrival_airport'] }}</td>
                     </tr>
-                </table>
-                <br>
-            {% endfor %}
-        {% endif %}
+                {% endif %}
+            </table>
+        {% endfor %}
+            <br>
     {% else %}
         <h2>{{ nothing }}</h2>
     {% endif %}
