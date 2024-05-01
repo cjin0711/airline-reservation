@@ -12,8 +12,11 @@
                 <tr>
                     <th>Status</th>
                     <th>Airline Name</th>
+                    <th>Airplane Name</th>
                     <th>Flight Number</th>
+                    <th>Airplane ID</th>
                     <th>Departure Date</th>
+                    <th>Departure Time</th>
                     <th>Arrival Date</th>
                     <th>Arrival Time</th>
                     <th>Depart Airport</th>
@@ -26,8 +29,11 @@
                     <tr>
                         <td>{{ flight['flight_status'] }}</td>
                         <td>{{ flight['airline_name'] }}</td>
+                        <td>{{ flight['airplane_name'] }}</td>
                         <td>{{ flight['flight_number'] }}</td>
+                        <td>{{ flight['airplane_id'] }}</td>
                         <td>{{ flight['depart_date'] }}</td>
+                        <td>{{ flight['depart_time'] }}</td>
                         <td>{{ flight['arrival_date'] }}</td>
                         <!--remove td below-->
                         <td>{{ flight['arrival_time'] }}</td>
@@ -37,8 +43,14 @@
                             <td>
                                 <form action = "/purchase" method='GET'>
                                     <!--shortcut way to make sure specified gets passed through with button click-->
+                                    <input type="hidden" name = "flight_type" value="one-way">
                                     <input type="hidden" name = "airline_name" value="{{ flight['airline_name'] }}">
+                                    <input type="hidden" name = "airplane_name" value="{{ flight['airplane_name'] }}">
                                     <input type="hidden" name = "flight_number" value="{{ flight['flight_number'] }}">
+                                    <input type="hidden" name = "airplane_id" value="{{ flight['airplane_id'] }}">
+                                    <input type="hidden" name = "depart_date" value="{{ flight['depart_date'] }}">
+                                    <input type="hidden" name = "depart_time" value="{{ flight['depart_time'] }}">
+                                    <input type="hidden" name = "airplane_name" value="{{ flight['airplane_name'] }}">
                                     <input type="submit" class="purchase" value = Purchase></input>
                                 </form>
                             </td>
@@ -48,8 +60,11 @@
                     <tr>
                         <td>{{ flight[0]['flight_status'] }}</td>
                         <td>{{ flight[0]['airline_name'] }}</td>
+                        <td>{{ flight[0]['airplane_name'] }}</td>
                         <td>{{ flight[0]['flight_number'] }}</td>
+                        <td>{{ flight[0]['airplane_id'] }}</td>
                         <td>{{ flight[0]['depart_date'] }}</td>
+                        <td>{{ flight[0]['depart_time'] }}</td>
                         <td>{{ flight[0]['arrival_date'] }}</td>
                         <td>{{ flight[0]['arrival_time'] }}</td>
                         <td>{{ flight[0]['depart_airport'] }}</td>
@@ -59,10 +74,18 @@
                             <form action = "/purchase" method='GET'>
                                 <!--shortcut way to make sure specified gets passed through with button click-->
                                 <input type="hidden" name = "flight_type" value="round-trip">
-                                <input type="hidden" name = "depart_airline_name" value="{{ flight[0]['airline_name'] }}">
-                                <input type="hidden" name = "depart_flight_number" value="{{ flight[0]['flight_number'] }}">
-                                <input type="hidden" name = "return_airline_name" value="{{ flight[1]['airline_name'] }}">
-                                <input type="hidden" name = "return_flight_number" value="{{ flight[1]['flight_number'] }}">
+                                <input type="hidden" name = "departing_airline_name" value="{{ flight[0]['airline_name'] }}">
+                                <input type="hidden" name = "departing_flight_number" value="{{ flight[0]['flight_number'] }}">
+                                <input type="hidden" name = "departing_airplane_id" value="{{ flight[0]['airplane_id'] }}">
+                                <input type="hidden" name = "departing_depart_date" value="{{ flight[0]['depart_date'] }}">
+                                <input type="hidden" name = "departing_depart_time" value="{{ flight[0]['depart_time'] }}">
+                                <input type="hidden" name = "departing_airplane_name" value="{{ flight[0]['airplane_name'] }}">
+                                <input type="hidden" name = "returning_airline_name" value="{{ flight[1]['airline_name'] }}">
+                                <input type="hidden" name = "returning_flight_number" value="{{ flight[1]['flight_number'] }}">
+                                <input type="hidden" name = "returning_airplane_id" value="{{ flight[1]['airplane_id'] }}">
+                                <input type="hidden" name = "returning_depart_date" value="{{ flight[1]['depart_date'] }}">
+                                <input type="hidden" name = "returning_depart_time" value="{{ flight[1]['depart_time'] }}">
+                                <input type="hidden" name = "returning_airplane_name" value="{{ flight[1]['airplane_name'] }}">
                                 <input type="submit" class="purchase" value = Purchase></input>
                             </form>
                         </td>
@@ -71,8 +94,11 @@
                     <tr>
                         <td>{{ flight[1]['flight_status'] }}</td>
                         <td>{{ flight[1]['airline_name'] }}</td>
+                        <td>{{ flight[1]['airplane_name'] }}</td>
                         <td>{{ flight[1]['flight_number'] }}</td>
+                        <td>{{ flight[1]['airplane_id'] }}</td>
                         <td>{{ flight[1]['depart_date'] }}</td>
+                        <td>{{ flight[1]['depart_time'] }}</td>
                         <td>{{ flight[1]['arrival_date'] }}</td>
                         <td>{{ flight[1]['arrival_time'] }}</td>
                         <td>{{ flight[1]['depart_airport'] }}</td>

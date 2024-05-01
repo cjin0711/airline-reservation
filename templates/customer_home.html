@@ -36,9 +36,10 @@
                         <td>{{ flight.depart_airport }}</td>
                         <td>{{ flight.arrival_airport }}</td>
                         <td>
-                            <form action="/cancel_trip" method="POST">
-                                <input type="hidden" name="ticket_id" value="{{ flight.ticket_id }}">
-                                <input type="submit" value="Cancel Trip">
+                            <form action="/cancel_trip" method="GET">
+                                <!--shortcut way to make sure specified gets passed through with button click-->
+                                <input type="hidden" name = "ticket_id" value="{{ flight.ticket_id }}">
+                                <input type="submit" class="cancel" value = Cancel></input>
                             </form>
                         </td>
                     </tr>
@@ -48,9 +49,9 @@
 
         <h2>Search Flights</h2>
         <form action="/flights" method="POST" class="search-form">
-            <label for="flight">Flight Type</label>
-            <input type="radio" name="flight_type" value="one-way" onchange='toggleReturn()' checked> One-way
-            <input type="radio" name="flight_type" value="round-trip" onchange='toggleReturn()'> Round-trip
+            <label for="flight">Flight Type:</label>
+            <input type="radio" id="flight" name="flight_type" value="one-way" onchange='toggleReturn()' checked> One-way
+            <input type="radio" id="flight" name="flight_type" value="round-trip" onchange='toggleReturn()'> Round-trip
             <br>
             <br>
 
@@ -70,7 +71,7 @@
         </form>
 
         <h2>Give Ratings and Comments</h2>
-        <a href="/give_ratings" class="button">Rate and Comment on Previous Flights</a>
+        <a href="/give_ratings_comments" class="button">Rate and Comment on Previous Flights</a>
         
         <h2>Track My Spending</h2>
         <a href="/track_spending" class="button">View Spending Report</a>
