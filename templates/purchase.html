@@ -8,7 +8,7 @@
 </head>
 <body>
     <h1>Purchase Tickets</h1>
-    <form action="/purchaseAuth" method="POST">
+    <form action="/purchaseAuth" method='POST'>
         <div class="purchase-container">
             <div class="flight-search-container">
                 <label for="email">Email:</label>
@@ -32,8 +32,16 @@
             </div>
         </div>
         <div class="flight-search-container">
-            <p>Price: </p>
-            <input type="submit" value="CONFIRM PURCHASE">
+            {% if flight_type == 'one-way' %}
+                <p>Flight Price: ${{ ticket_price }}</p>
+            {% else %}
+                <p>Departing Flight Price: ${{ depart_ticket_price }}</p>
+                <p>Returning Flight Price: ${{ return_ticket_price }}</p>
+                <p>Total: ${{ total }}</p>
+            {% endif %}
+            <input type="submit" name = "choice" value="Buy Another">
+            <input type="submit" name = "choice" value="CONFIRM PURCHASE">
+            </form>
         </div>
     </form>
 </body>
