@@ -11,13 +11,13 @@
             <label for="date_range">Select Date Range:</label>
             <input type="date" id="start_date" name="start_date" required>
             <input type="date" id="end_date" name="end_date" required>
-            
-            <label for="depart_airport">Select Depart Airport:</label>
-            <input type="text" id="depart_airport" name="depart_airport" required>
-            
-            <label for="arrival_airport">Select Arrival Airport:</label>
-            <input type="text" id="arrival_airport" name="arrival_airport" required>
-            
+            <br>
+            <label for="airport">Select Airport:</label>
+            <select id="airport" name="airport">
+                <option value="JFK">JFK</option>
+                <option value="PVG">PVG</option>
+            </select>
+            <br>
             <input type="submit" value="View Flights">
         </form>
         <!-- Display the list of flights based on the selected criteria -->

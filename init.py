@@ -129,7 +129,7 @@ def customer_home():
             FROM Ticket t
             JOIN Purchases p ON t.ticket_id = p.ticket_id
             JOIN Flight f ON t.airline_name = f.airline_name AND t.flight_number = f.flight_number AND t.depart_date = f.depart_date AND t.depart_time = f.depart_time
-            WHERE p.email = %s
+            WHERE p.email = %s AND (f.depart_date > CURDATE() OR (f.depart_date = CURDATE() AND f.depart_date > CURTIME()))
             ORDER BY f.depart_date ASC
         '''
         cursor.execute(query, (email))
@@ -472,16 +472,21 @@ def purchaseAuth():
 	
 	#Ticket_id needs to be created for flight first:
 	largest_ticket_id = '''SELECT MAX(ticket_id) as recent_id
-				   		  FROM purchases'''
+				   		  FROM ticket'''
 	
 	cursor = conn.cursor()
 	cursor.execute(largest_ticket_id)
 	largest_id = cursor.fetchone()
 	
+	if largest_id['recent_id'] == None:
+		new_ticket_id = "T1"
+
+	else:
 	#increments the num value next to 'T' by 1 to generate new id
-	new_ticket_id = f"T{int(largest_id['recent_id'][1]) + 1}"
+		new_ticket_id = f"T{int(largest_id['recent_id'][1:len(largest_id['recent_id'])]) + 1}"
 
 	print(f"NEW TICKET ID: {new_ticket_id}")
+
 	
 	add_ticket = '''INSERT INTO ticket (ticket_id, flight_number, airline_name, depart_date, depart_time, 
 			   ticket_price, card_type, card_num, card_name, exp_date, pur_date, pur_time)
@@ -503,13 +508,15 @@ def purchaseAuth():
 
 	if session['flight_type'] == 'one-way':
 
+		print("NOT SUPPOSED TO HAPPEN")
+
 		#CHECK IF FLIGHT CAPACITY IS 80% OR FULL
 		if session['capacity_filled'] == 1:
 			print("MAX CAPACITY REACHED")
-			'''
+			
 			error = "Selected Flight has no more available seats"
 			return render_template('customer_home.html', error = error)
-			'''
+			
 		else:
 			
 			#add to ticket table
@@ -532,15 +539,22 @@ def purchaseAuth():
 			cursor.execute(add_ticket, (new_ticket_id, session['departing_flight_num'], session['departing_airline_name'], session['departing_depart_date'], session['departing_depart_time'], session['depart_ticket_price'], card_type, card_num, card_name, exp_date, current_day, current_time))
 			conn.commit()
 
+			#add to purchase table
+			cursor.execute(add_purchase, (email, new_ticket_id))
+			conn.commit()
+			
 			#return flight needs separate ticket id since both flights in a round trip need to have unique ticket_ids (increment id of departure flight by 1 to generate new id for return flight)
-			return_new_ticket_id = f"T{int(new_ticket_id[1]) + 1}"
+			return_new_ticket_id = f"T{int(new_ticket_id[1:len(new_ticket_id)]) + 1}"
+			print(f"RETURN TICKET ID: {return_new_ticket_id}")
+			
+			
 			cursor.execute(add_ticket, (return_new_ticket_id, session['returning_flight_num'], session['returning_airline_name'], session['returning_depart_date'], session['returning_depart_time'], session['return_ticket_price'], card_type, card_num, card_name, exp_date, current_day, current_time))
 			conn.commit()
-
+			'''
 			#add to purchase table
 			cursor.execute(add_purchase(email, new_ticket_id))
 			conn.commit()
-
+			'''
 			#new id for return flight
 			return_new_ticket_id = f"T{int(new_ticket_id[1]) + 1}"
 			cursor.execute(add_purchase, (email, return_new_ticket_id))
@@ -548,12 +562,20 @@ def purchaseAuth():
 			
 
 	if action == 'Buy Another':
+
+		session['card_type'] = card_type
+		session['card_name'] = card_name
+		session['card_num'] = card_num
+		session['exp_date'] = exp_date
+
+
 		if session['flight_type'] == 'one-way':
 			#session['total_price'] = session['total_price'] + session['ticket_price']
-			return render_template('purchase.html', flight_type = session['flight_type'], ticket_price = session['ticket_price'])
+			return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, flight_type = session['flight_type'], ticket_price = session['ticket_price'])
 			#SESSION POP CARD INFO AFTER DONE?
 		else:
-			return render_template('purchase.html', flight_type = session['flight_type'], ticket_price = session['ticket_price'], depart_ticket_price = session['depart_ticket_price'], return_ticket_price = session['return_ticket_price'], total = session['total'])
+			return render_template('purchase.html', buy_another = action, email = email, card_type = card_type, card_name = card_name, card_num = card_num, exp_date = exp_date, 
+						  flight_type = session['flight_type'], ticket_price = session['ticket_price'], depart_ticket_price = session['depart_ticket_price'], return_ticket_price = session['return_ticket_price'], total = session['total'])
   
     #done
 	else:
@@ -564,6 +586,7 @@ def purchaseAuth():
 def cancel_trip():
 	ticket_id = request.args.get('ticket_id')
 	print("TICKET ID SHOULD BE")
+	print("FUCK YOU")
 	print(ticket_id)
 
 	cursor = conn.cursor()
@@ -748,30 +771,31 @@ def schedule_maintenanceAuth():
 #Authorizes staff to view the flights operated by the airline they work at
 @app.route('/view_flightsAuth', methods=['GET', 'POST'])
 def view_flightsAuth():
-	if 'username' not in session:
-		return render_template('staff_login.html')
-	
-	airline_name = session['airline_name']
+    if 'username' not in session:
+        return render_template('staff_login.html')
 
-	if request.method == 'POST':
-		start_date = request.form['start_date']
-		end_date = request.form['end_date']
-		airport = request.form['airport']
+    airline_name = session['airline_name']
 
-		cursor = conn.cursor() 
-		# Finds all flights during the specific flight period 
-		query = '''
+    if request.method == 'POST':
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        depart_airport = request.form['depart_airport']
+        arrival_airport = request.form['arrival_airport']
+
+        cursor = conn.cursor() 
+        # Finds all flights during the specific flight period 
+        query = '''
             SELECT f.flight_number, f.depart_date, f.depart_time, f.arrival_date, f.arrival_time
             FROM Flight f
             WHERE f.airline_name = %s
             AND f.depart_date BETWEEN %s AND %s
-            AND (f.depart_airport = %s OR f.arrival_airport = %s OR %s = '')
+            AND depart_airport = %s AND arrival_airport = %s
         '''
-		cursor.execute(query, (airline_name, start_date, end_date, airport, airport, airport))
-		flights = cursor.fetchall()
-		cursor.close()
-		return render_template('view_flights.html', flights = flights)
-	return render_template('view_flights.html')
+        cursor.execute(query, (airline_name, start_date, end_date, depart_airport, arrival_airport))
+        flights = cursor.fetchall()
+        cursor.close()
+        return render_template('view_flights.html', flights = flights)
+    return render_template('view_flights.html')
 
 # Authorizes staff to view customers in the flights
 @app.route('/view_customers/<flight_number>')
@@ -789,6 +813,8 @@ def view_customers(flight_number):
     '''
 	cursor.execute(query, (flight_number,))
 	customers = cursor.fetchall()
+	print("CUSTOMERS:")
+	print(customers)
 	cursor.close()
 	return render_template('view_customers.html', customers=customers)
 
@@ -813,25 +839,25 @@ def view_flight_ratingsAuth():
         flight_ratings = cursor.fetchall()
         cursor.close()
         
-        return render_template('view_flight_ratings.html', flight_ratings=flight_ratings)
+        return render_template('view_flight_rating.html', flight_ratings=flight_ratings)
     
     cursor = conn.cursor()
     query = 'SELECT DISTINCT flight_number FROM Flight WHERE airline_name = %s'
     cursor.execute(query, (session['airline_name'],))
     flights = cursor.fetchall()
     cursor.close()
-    return render_template('view_flight_ratings.html', flights=flights)
+    return render_template('view_flight_rating.html', flights=flights)
 
 #Authorizes staff to view the frequent customers of the airline
 @app.route('/view_frequent_customersAuth', methods=['GET', 'POST'])
 def view_frequent_customersAuth():
-	if 'username' not in session:
-		return render_template('staff_login.html')
-    
-	airline_name = session['airline_name']
-	
-	cursor = conn.cursor()
-	query = '''
+    if 'username' not in session:
+        return render_template('staff_login.html')
+
+    airline_name = session['airline_name']
+
+    cursor = conn.cursor()
+    query = '''
         SELECT c.first_name, c.last_name, COUNT(*) AS num_flights
         FROM Customer c
         JOIN Purchases p ON c.email = p.email
@@ -842,22 +868,23 @@ def view_frequent_customersAuth():
         ORDER BY num_flights DESC
         LIMIT 1
     '''
-	cursor.execute(query, (airline_name,))
-	most_frequent_customer = cursor.fetchone()
-	cursor.close()
-	return render_template('view_frequent_customer.html', most_frequent_customer=most_frequent_customer)
+    cursor.execute(query, (airline_name,))
+    most_frequent_customer = cursor.fetchone()
+    cursor.close()
+    return render_template('view_frequent_customer.html', most_frequent_customer=most_frequent_customer)
+
 
 #Lets staff view customer flights 
 @app.route('/view_customer_flights', methods=['POST'])
 def view_customer_flights():
-	if 'username' not in session:
-		return render_template('staff_login.html')
-	
-	airline_name = session['airline_name']
-	customer_email = request.form['customer_email']
+    if 'username' not in session:
+        return render_template('staff_login.html')
 
-	cursor = conn.cursor()
-	query = '''
+    airline_name = session['airline_name']
+    customer_email = request.form['customer_email']
+
+    cursor = conn.cursor()
+    query = '''
         SELECT c.first_name, c.last_name, f.flight_number, f.depart_date, f.depart_time, f.arrival_date, f.arrival_time
         FROM Customer c
         JOIN Purchases p ON c.email = p.email
@@ -865,10 +892,10 @@ def view_customer_flights():
         JOIN Flight f ON t.flight_number = f.flight_number AND t.airline_name = f.airline_name
         WHERE f.airline_name = %s AND c.email = %s
     '''
-	cursor.execute(query, (airline_name, customer_email))
-	customer_flights = cursor.fetchall()
-	cursor.close()
-	return render_template('view_frequent_customer.html', customer_flights=customer_flights)
+    cursor.execute(query, (airline_name, customer_email))
+    customer_flights = cursor.fetchall()
+    cursor.close()
+    return render_template('view_frequent_customer.html', customer_flights=customer_flights)
 
 #Authorizes staff to view the earned revenue 
 @app.route('/view_revenueAuth')
@@ -907,6 +934,7 @@ def view_revenueAuth():
 @app.route('/logout')
 def logout():
 	session.pop('email')
+	session.clear()
 	return redirect('/customer_login')
 
 #Define route for staff logout 
@@ -975,32 +1003,38 @@ def view_revenue():
 def give_ratings_comments():
 	return render_template('give_ratings_comments.html')
 
+
 #Lets user to give ratings and comments for prev flights they being on
 @app.route('/give_ratings_commentsAuth', methods=['GET', 'POST'])
 def give_ratings_commentsAuth():
-	email = session['email']
-	session['ticket_id']  = request.form['ticket_id'] # create session for ticket_id
-	rating = request.form['rating']
-	comment = request.form['comment']
-		
-
-	cursor = conn.cursor()
-
-	query = '''SELECT flight_number 
-				FROM flight 
-				WHERE ((arrival_date < CURDATE()) OR 
-				(arrival_date = CURDATE() AND arrival_time < CURTIME())) AND 
-				flight_number IN( SELECT flight_number 
-									FROM ticket 
-									WHERE ticket_id IN( SELECT ticket_id 
-														FROM purchases as P 
-														WHERE P.email = %s))'''
 	
+    email = session['email']
+    ticket_id = request.form.get('ticket_id')
+    session['ticket_id']  = request.form.get('ticket_id')# create session for ticket_id 
 	
-	cursor.execute(query, (email))
-	tickets = cursor.fetchall()
-	cursor.close()
-	return render_template('give_ratings_comments.html', previous_tickets = tickets)
+    print("GOTTEN TICKET ID IS:")
+    print(ticket_id)
+    cursor = conn.cursor()
+
+    query = '''SELECT ticket_id 
+                FROM flight NATURAL JOIN ticket
+                WHERE ((arrival_date < CURDATE()) OR 
+                (arrival_date = CURDATE() AND arrival_time < CURTIME())) AND 
+                ticket_id IN( SELECT ticket_id 
+                                    FROM ticket 
+                                    WHERE ticket_id IN( SELECT ticket_id 
+                                                        FROM purchases as P 
+                                                        WHERE P.email = %s))'''
+
+
+    cursor.execute(query, (email))
+    tickets = cursor.fetchall()
+	
+    print("ALL PAST FLIGHTS")
+    print(tickets)
+    cursor.close()
+    return render_template('give_ratings_comments.html', previous_tickets = tickets)
+
 		
 
 @app.route('/post_ratings_comments', methods = ['GET', 'POST'])
@@ -1010,17 +1044,23 @@ def post_ratings_comments():
 	comment = request.form['comment']
 	ticket_id = session['ticket_id']
 
+	print("TICKET_ID IS: ")
+	print(ticket_id)
+
 	cursor = conn.cursor()
 	ticket_find = '''SELECT * 
-				FROM ticket
-				WHERE ticket_id = %s'''
-	cursor.execute(ticket_find, (ticket_id))
+			FROM ticket
+			WHERE ticket_id = %s'''
+	cursor.execute(ticket_find, (ticket_id,))
 	ticket = cursor.fetchone()
+
+	print(ticket)
+	
 	airline_name = ticket['airline_name']
 	flight_number = ticket['flight_number']
 	depart_date = ticket['depart_date']
 	depart_time = ticket['depart_time']
-	
+
 
 	review_post = '''INSERT INTO Review(email, airline_name, flight_number, depart_date, depart_time, rate, comment)
 	VALUES(%s, %s, %s, %s, %s, %s, %s)'''
@@ -1028,7 +1068,9 @@ def post_ratings_comments():
 	cursor.execute(review_post, (email, airline_name, flight_number, depart_date, depart_time, rate, comment))
 	conn.commit()
 	cursor.close()
-
+	
+	
+	
 	return redirect('/customer_home')
 
 	

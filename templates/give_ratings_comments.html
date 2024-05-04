@@ -7,15 +7,19 @@
 <body>
     <h1>Give Rating and Comment</h1>
     <div class="container">
-        <form action='/give_ratings_commentsAuth' method="POST">
-            <label for="flight_number">Flight Number:</label>
-            <select name="flight_number" id="flight_number" required>
-                <option value="">Select a flight</option>
-                {% for flight in previous_flights %}
-                <option value="{{ flight.flight_number }}">{{ flight.flight_number }} ({{ flight.depart_date }} {{ flight.depart_time }})</option>
+        <form action='/give_ratings_commentsAuth' method = "POST">
+            <label for="ticket_id">Ticket ID:</label>
+            
+            <select  name="ticket_id" id="ticket_id" required>
+                <option value="">Select a Ticket ID</option>
+                {% for ticket in previous_tickets %}
+                    <option value="{{ ticket['ticket_id'] }}">{{ ticket['ticket_id'] }}</option>
                 {% endfor %}
             </select>
-            <br>
+            <input type ="submit" value = "Select">
+        </form>
+
+        <form action ='/post_ratings_comments' method = "POST"> 
             <label for="rating">Rating:</label>
             <select name="rating" id="rating" required>
                 <option value="">Select a rating</option>
@@ -29,8 +33,10 @@
             <label for="comment">Comment:</label>
             <textarea name="comment" id="comment" required></textarea>
             <br>
-            <button type="submit">Submit</button>
+            <input type="submit">Submit</input>
         </form>
+           
+        
     </div>
     <div class="go-back">
         <a href="/customer_home"><button>Go Back</button></a>
